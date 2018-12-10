@@ -1,0 +1,33 @@
+I:Information W:Warning C:Critical O:Order S:State
+1544002972.4264872
+MSG-I,2018-12-05 18:43:08,last price,-79.5
+MSG-I,2018-12-05 18:43:24,last price,-79.5
+MSG-I,2018-12-05 18:43:40,last price,-79.5
+MSG-I,2018-12-05 18:43:58,last price,-79.5
+MSG-I,2018-12-05 18:44:28,last price,-79.5
+MSG-I,2018-12-05 18:44:48,last price,-79.5
+MSG-I,2018-12-05 18:45:05,last price,-79.5
+MSG-I,2018-12-05 18:45:38,last price,-79.5
+MSG-I,2018-12-05 18:45:56,last price,-79.5
+MSG-I,2018-12-05 18:46:37,last price,-79.5
+MSG-I,2018-12-05 18:47:00,last price,-79.5
+MSG-I,2018-12-05 18:47:39,last price,-79.5
+MSG-I,2018-12-05 18:48:01,last price,510.5
+MSG-I,2018-12-05 18:48:40,last price,510.5
+MSG-I,2018-12-05 18:49:02,last price,510.5
+MSG-I,2018-12-05 18:49:27,last price,-79.5
+MSG-I,2018-12-05 18:49:43,last price,510.5
+MSG-O,2018-12-05 18:49:48,Entry,XBTZ18,Sell,position,3,price,4108
+MSG-S,2018-12-05 18:49:51,symbol,XBTZ18,position,-3
+MSG-S,2018-12-05 18:49:51,symbol,XBTH19,position,0
+MSG-O,2018-12-05 18:49:57,Entry,XBTH19,Buy,position,3,price,4535
+MSG-S,2018-12-05 18:50:00,symbol,XBTZ18,position,-3
+MSG-S,2018-12-05 18:50:00,symbol,XBTH19,position,3
+MSG-O,2018-12-05 18:50:21,Close,XBTZ18,Buy,position,3,price,4700
+MSG-S,2018-12-05 18:50:24,symbol,XBTZ18,position,0
+MSG-S,2018-12-05 18:50:24,symbol,XBTH19,position,3
+MSG-O,2018-12-05 18:50:30,Close,XBTH19,Sell,position,3,price,4050
+MSG-S,2018-12-05 18:50:33,symbol,XBTZ18,position,0
+MSG-S,2018-12-05 18:50:33,symbol,XBTH19,position,0
+MSG-C,2018-12-05 18:49:43,Close 1!!
+Finish the trade!
