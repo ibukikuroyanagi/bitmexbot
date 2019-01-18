@@ -110,22 +110,16 @@ def bitmex(): #CCXT を呼び出す関数
 
 timeframe = "1m"
 num = 5
-symbol1 = 'XBTM19'
-symbol2 = 'XBTH19'
+symbol1 = 'BTC/USD'
 #5単位前までのデータを取得
-df18,sec = getdata(timeframe,num ,symbol1 )
-df19,sec = getdata(timeframe,num ,symbol2 )
-df = df18 - df19
-df['timeframe'] = df18['timeframe']
+df,sec = getdata(timeframe,num ,symbol1 )
+df['timeframe'] = df['timeframe']
 #時間を可視化
 df['timeframe'] = df['timeframe'].apply(read_date)
 
 
 def setdata(num):
-    df18,sec = getdata(timeframe,num ,symbol1 )
-    df19,sec = getdata(timeframe,num ,symbol2 )
-    df = df18 - df19
-    df['timeframe'] = df18['timeframe']
+    df,sec = getdata(timeframe,num ,symbol1 )
     #時間を可視化
     df['timeframe'] = df['timeframe'].apply(read_date)
     return df
@@ -153,8 +147,6 @@ def print_state():
     day_time = str(today).split(".")[0]
     print('MSG-S,'+day_time+',',end = '')
     print('symbol,'+str(state[0]['symbol'])+',position,'+str(state[0]['currentQty']))
-    print('MSG-S,'+day_time+',',end = '')
-    print('symbol,'+str(state[1]['symbol'])+',position,'+str(state[1]['currentQty']))
 
 #取引をする関数
 def trade(symbol,order_name,LOT,price):
@@ -174,7 +166,7 @@ def trade(symbol,order_name,LOT,price):
         print('{0},'.format(pos) +order['info']['symbol']+',' + order['info']['side'] + ',position,' + str(order['info']['orderQty']) + ',price,' + str(order['info']['price']) )
         print_state()
         if len(order) != 0:
-            return -1,order
+            return order
 
     except Exception as error:
         order = {}
@@ -183,7 +175,7 @@ def trade(symbol,order_name,LOT,price):
         print('MSG-W,'+time+',',end='')
         print(error)
         print('Please change LOT or EntryPrice')
-        return 0,order
+        return order
         pass
 
     #ポジションをしまう関数
@@ -197,73 +189,50 @@ def close_pos():
         order_name1 = 'buy'
         trade(symbol=symbol1,order_name=order_name1, LOT=LOT1,price=None)
 
-    LOT2 = state[1]['currentQty']
-    if LOT2 > 0:
-        order_name2 = 'sell'
-        trade(symbol=symbol2,order_name=order_name2, LOT=LOT2,price=None)
-    if LOT2 < 0:
-        order_name2 = 'buy'
-        trade(symbol=symbol2,order_name=order_name2, LOT=LOT2,price=None)
 
-mypos = bitmex().private_get_position()
-print([i['symbol'] for i in mypos])
 """ここからがBOTの始まり"""
 LOT = 3 #発注数(単位:XBTZ18 or XBTH19)
-CLOSE_RANGE = STD5[len(STD5)-1]*2.5#利確幅(単位:XBTZ18 or XBTH19)
-STOP_RANGE = STD5[len(STD5)-1]*2 #損切り幅(単位:XBTZ18 or XBTH19)
+CLOSE_RANGE = STD5[len(STD5)-1]*2.5#利確幅(単位:XBTUSD)
+STOP_RANGE = STD5[len(STD5)-1]*2 #損切り幅(単位:XBTUSD)
 print('I:Information W:Warning C:Critical O:Order S:State')
-
-
 
 old = time.time()
 print(old)
 old_count = 0
 sig = 2
 order1 = {}#"""symbol1 sell"""
-order2 = {}#"""symbol2 buy"""
 order3 = {}#"""symbol1 buy"""
-order4 = {}#"""symbol2 sell"""
 order_fin1 = {}
-order_fin2 = {}
 order_fin3 = {}
-order_fin4 = {}
+mypos = bitmex().private_get_position()
 
-close_pos()
+if len(mypos) == 0:
+    last = bitmex().fetch_ticker(symbol1)['last']
+    o=trade(symbol=symbol1,order_name='buy', LOT=LOT,price=last)
 
 while True:
     try:
-        last_s1 = bitmex().fetch_ticker(symbol1)['last']
-        last_s2 = bitmex().fetch_ticker(symbol2)['last']
-        last = last_s1 - last_s2
+        last = bitmex().fetch_ticker(symbol1)['last']
         today = datetime.datetime.today()
         day_time = str(today).split(".")[0]
-        print('MSG-I,'+day_time+',' + '{0},{1},{2},{3},LTP,{4}'.format(symbol1,str(last_s1),symbol2,str(last_s2),str(last)))
+        print('MSG-I,'+day_time+',' + '{0},{1}'.format(symbol1,str(last)))
 
-        flag1 = 1
-        flag2 = 1
 
-        if (flag1 == -1)&(flag2 == -1):
-            flag1 = 1
-            flag2 = 1
+        if df2['bbd_p2'][len(df)-1] - STD5[len(STD5)-1]/sig < last < df2['bbd_p2'][len(df)-1] + STD5[len(STD5)-1]/sig:
+            if order3['info']['price'] == 0:
+                order1 = trade(symbol=symbol1,order_name='sell', LOT=LOT,price=last)
+            elif order3['info']['price'] + 5 < last :
+                order1 = trade(symbol=symbol1,order_name='sell', LOT=LOT,price=last)
 
-        elif df2['bbd_p2'][len(df)-1] - STD5[len(STD5)-1]/sig < last < df2['bbd_p2'][len(df)-1] + STD5[len(STD5)-1]/sig:
-            if  flag1 == 1:
-                flag1,order1 = trade(symbol=symbol1,order_name='sell', LOT=LOT,price=last_s1)
-            if  flag2 == 1:
-                flag2,order2 = trade(symbol=symbol2,order_name='buy',  LOT=LOT,price=last_s2)
-
-        elif (flag1 == -1)&(flag2 == -1):
-            flag1 = 1
-            flag2 = 1
 
         elif df2['bbd_m2'][len(df)-1] - STD5[len(STD5)-1]/sig < last < df2['bbd_m2'][len(df)-1] + STD5[len(STD5)-1]/sig:
-            if  flag1 == 1:
-                flag1,order3 = trade(symbol=symbol1,order_name='buy', LOT=LOT,price=last_s1)
-            if  flag2 == 1:
-                flag2,order4 = trade(symbol=symbol2,order_name='sell',LOT=LOT,price=last_s2)
+            if order1['info']['price'] == 0:
+                order3 = trade(symbol=symbol1,order_name='buy', LOT=LOT,price=last)
+            elif order1['info']['price'] - 5 > last :
+                order3 = trade(symbol=symbol1,order_name='buy', LOT=LOT,price=last)
+
     ###############################################################################
     #データの取得
-
         now = time.time()
         count = math.floor((now - old)/sec)
         a = count - old_count
@@ -287,48 +256,42 @@ while True:
 
         ########################################################################
 
-        if len(order1)*len(order2) != 0:
-
-            if order1['info']['price'] - order2['info']['price'] > df2['bbd_p2'][len(df)-1] + STOP_RANGE:
+        if len(order1) != 0:
+            if order1['info']['price'] > df2['bbd_p2'][len(df)-1] + STOP_RANGE:
                 #損切り
                 LOT1 = bitmex().private_get_position()[0]['currentQty']
-                LOT2 = bitmex().private_get_position()[1]['currentQty']
+
                 if LOT1 != 0:
-                    flag1,order_fin1 = trade(symbol=symbol1,order_name='buy', LOT=LOT1,price=None)
-                if LOT2 != 0:
-                    flag2,order_fin2 = trade(symbol=symbol2,order_name='sell', LOT=LOT2,price=None)
-                if len(order_fin1)*len(order_fin2) != 0:
+                    order_fin1 = trade(symbol=symbol1,order_name='buy', LOT=LOT1,price=None)
+
+                if len(order_fin1) != 0:
                     print('MSG-C,'+day_time+',',end='')
                     print('Loss Cut 1!!')
                     close_pos()
                     sys.exit()
 
-            if order1['info']['price'] - order2['info']['price'] < df2['bbd_p2'][len(df)-1] - CLOSE_RANGE:
+            if order1['info']['price'] < df2['bbd_p2'][len(df)-1] - CLOSE_RANGE:
                 #利益確定
                 LOT1 = bitmex().private_get_position()[0]['currentQty']
-                LOT2 = bitmex().private_get_position()[1]['currentQty']
+
                 if LOT1 != 0 and order1['info']['price'] > last_s1 - 30:
-                    flag1,order_fin1 = trade(symbol=symbol1,order_name='buy', LOT=LOT1,price = last_s1)
-                if LOT2 != 0 and order2['info']['price'] < last_s2 + 30:
-                    flag2,order_fin2 = trade(symbol=symbol2,order_name='sell', LOT=LOT2,price = last_s2)
-                if len(order_fin1)*len(order_fin2) != 0:
+                    order_fin1 = trade(symbol=symbol1,order_name='buy', LOT=LOT1,price = last)
+
+                if len(order_fin1) != 0:
                     print('MSG-C,'+day_time+',',end='')
                     print('Close 1!!')
                     close_pos()
                     sys.exit()
 
 
-        if len(order3)*len(order4) != 0:
-
+        if len(order3) != 0:
             if order3['info']['price'] - order4['info']['price'] < df2['bbd_m2'][len(df)-1] - STOP_RANGE:
                 #損切り
                 LOT1 = bitmex().private_get_position()[0]['currentQty']
-                LOT2 = bitmex().private_get_position()[1]['currentQty']
                 if LOT1 != 0:
-                    flag3,order_fin3 = trade(symbol=symbol1,order_name='sell', LOT=LOT1,price=None)
-                if LOT2 != 0:
-                    flag4,order_fin4 = trade(symbol=symbol2,order_name='buy', LOT=LOT2,price=None)
-                if len(order_fin3)*len(order_fin4) != 0:
+                    order_fin3 = trade(symbol=symbol1,order_name='sell', LOT=LOT1,price=None)
+
+                if len(order_fin3) != 0:
                     print('MSG-C,'+day_time+',',end='')
                     print('Loss Cut 2!!')
                     close_pos()
@@ -337,12 +300,10 @@ while True:
             if order3['info']['price'] - order4['info']['price'] > df2['bbd_m2'][len(df)-1] + CLOSE_RANGE:
                 #利益確定
                 LOT1 = bitmex().private_get_position()[0]['currentQty']
-                LOT2 = bitmex().private_get_position()[1]['currentQty']
                 if LOT1 != 0 and order1['info']['price'] < last_s1 + 30:
-                    flag3,order_fin3 = trade(symbol=symbol1,order_name='sell',LOT=LOT1,price = last_s1)
-                if LOT2 != 0 and order2['info']['price'] > last_s2 - 30:
-                    flag4,order_fin4 = trade(symbol=symbol2,order_name='buy',LOT=LOT2,price = last_s2)
-                if len(order_fin3)*len(order_fin4) !=0:
+                    order_fin3 = trade(symbol=symbol1,order_name='sell',LOT=LOT1,price = last)
+
+                if len(order_fin3) !=0:
                     print('MSG-C,'+day_time+',',end='')
                     print('Close 2!!')
                     close_pos()
